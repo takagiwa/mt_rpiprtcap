@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name local)(type Legacy)(uri C:/Projects/mt_rpiprtcap/board/project_components/mt_prtcapshield.lib)(options "")(descr ""))
+)
