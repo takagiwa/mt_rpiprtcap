@@ -4,14 +4,14 @@ EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 3
-Title ""
-Date ""
-Rev ""
+Title "mt_rpiprtcap"
+Date "2020-10-04"
+Rev "0.1"
 Comp ""
-Comment1 ""
-Comment2 ""
+Comment1 "Masayuki Takagiwa"
+Comment2 "https://github.com/takagiwa/mt_rpiprtcap"
 Comment3 ""
-Comment4 ""
+Comment4 "GPLv2"
 $EndDescr
 $Sheet
 S 2300 2100 1850 2550
