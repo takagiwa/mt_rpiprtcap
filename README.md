@@ -17,3 +17,15 @@ I have tested on Raspbian GNU/Linux 10 (buster), gcc 8.3.0, pigpio 78 (get_pigpi
 The software sometime failed to capture data (3 or 4 characters in 10MB).
 
 There are no interpreters that convert from parallel port data to picture yet.
+
+How to use
+
+connect all devices.
+
+power-on all devices.
+
+start software_rpi/prt executable
+
+start print on PC or equipment
+
+when it seems ended, Ctrl-C on prt executable
