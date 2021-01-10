@@ -14,7 +14,11 @@ gcc -Wall -pthread -o prt prt.cpp -lpigpiod_if2 -lrt
 
 I have tested on Raspbian GNU/Linux 10 (buster), gcc 8.3.0, pigpio 78 (get_pigpio_version reported) and Raspberry Pi 4B 2GB.
 
-The software sometime failed to capture data (3 or 4 characters in 10MB).
+The software still have some huge bugs.
+
+* failed to capture first byte
+* sometime failed to capture data (3 or 4 characters in 10MB).
+* too slow (almost 1KB/sec)
 
 There are no interpreters that convert from parallel port data to picture yet.
 
