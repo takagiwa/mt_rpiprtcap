@@ -8,9 +8,9 @@ The PCB design file for KiCAD is in "board" directory.
 
 The software code depends on pigpiod is in "software_rpi" directory.
 
-you can build software as following
+you can build software as following (comes from pigpio)
 
-gcc -Wall -pthread -o prog prog.c -lpigpiod_if2 -lrt
+gcc -Wall -pthread -o prt prt.cpp -lpigpiod_if2 -lrt
 
 I have tested on Raspbian GNU/Linux 10 (buster), gcc 8.3.0, pigpio 78 (get_pigpio_version reported) and Raspberry Pi 4B 2GB.
 
