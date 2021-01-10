@@ -30,6 +30,7 @@ enum PRT_PORTS {
   PRT_I_Select
 };
 
+/* Handle Ctrl-C */
 /* https://qiita.com/supaiku2452/items/10772cbd2706dede06b9 */
 void abrt_handler(int sig, siginfo_t *info, void *ctx);
 volatile sig_atomic_t eflag = 0;
@@ -62,17 +63,15 @@ int main(void)
   int pi;
   uint32_t r;
   int ret;
-  unsigned int rd, prev_rd;
+  unsigned int rd;
   int i, j, b, prev_b;
-  uint32_t st, t;
   FILE *fp;
-  char s[256];
 
+  /* handle Ctrl-C */
   struct sigaction sa_sigabrt;
   memset(&sa_sigabrt, 0, sizeof(sa_sigabrt));
   sa_sigabrt.sa_sigaction = abrt_handler;
   sa_sigabrt.sa_flags = SA_SIGINFO;
-
   if ( sigaction(SIGINT, &sa_sigabrt, NULL) < 0 ) {
     exit(1);
   }
@@ -171,90 +170,42 @@ int main(void)
     return -1;
   }
 
-  st = get_current_tick(pi);
-
   i = 0;
   j = 0;
-  prev_rd = 0xFFFFFFFF;
   prev_b = 1;
   while (!eflag) {
-    if (0) {
-    rd = 0;
-    for (i = 0; i < 28; i++) {
-      b = gpio_read(pi, i);
-      rd |= (b & 0x1) << i;
-    }
-    if (rd != prev_rd) {
-      t = get_current_tick(pi) - st;
-      printf("@%d: ", t);
+    /* find falling edge of nStrobe */
+    b = gpio_read(pi, PRT_I_nStrobe);
+    if ((prev_b == 1) && ((b & 0x1) == 0)) {
+      /* negate Busy */
+      ret = my_gpio_write(pi, PRT_O_Busy, 1);
 
-      printf("nStrobe: %d, nAutoFd: %d, nInit: %d, Select: %d, Data: 0x%02X\n",
-        (rd >> PRT_I_nStrobe) & 0x1, (rd >> PRT_I_nAutoFd) & 0x1,
-        (rd >> PRT_I_nInit) & 0x1, (rd >> PRT_I_Select) & 0x1,
-        (rd >> PRT_I_D1) & 0xF);
-      printf("nFault: %d, nSelectIn: %d, PError: %d, nAck: %d, Busy: %d\n",
-        gpio_read(pi, PRT_O_nFault) & 0x1, gpio_read(pi, PRT_O_nSelectIn) & 0x1,
-        gpio_read(pi, PRT_O_PError) & 0x1, gpio_read(pi, PRT_O_nAck) & 0x1,
-        gpio_read(pi, PRT_O_Busy) & 0x1);
-
-      if (((rd >> PRT_I_nStrobe) & 0x1) == 0) {
-        ret = my_gpio_write(pi, PRT_O_Busy, 1);
-        ret = my_gpio_write(pi, PRT_O_nAck, 0);
-        ret = my_gpio_write(pi, PRT_O_nAck, 1);
-        ret = my_gpio_write(pi, PRT_O_Busy, 0);
-        for (j = 0; j < 1000; j++) {
-          b = gpio_read(pi, PRT_I_nStrobe);
-          if (b == 1) {
-            break;
-          }
-        }
+      rd = 0;
+      for (i = 0; i < 8; i++) {
+        rd |= (gpio_read(pi, i+PRT_I_D1) & 0x1) << i;
       }
+      putc(rd, fp);
 
-      prev_rd = rd;
-    }
-    }
-    if (0) {
-      ret = my_gpio_write(pi, PRT_O_OSCTX, i%2);
-      i++;
-      time_sleep(0.5);
-    }
-    if (1) {
-      b = gpio_read(pi, PRT_I_nStrobe);
-      if ((prev_b == 1) && ((b & 0x1) == 0)) {
-        ret = my_gpio_write(pi, PRT_O_Busy, 1);
+      /* assert & de-assert nAck. Also assert Busy */
+      ret = my_gpio_write(pi, PRT_O_nAck, 0);
+      ret = my_gpio_write(pi, PRT_O_nAck, 1);
+      if (0) ret = my_gpio_write(pi, PRT_O_Busy, 0);
 
-        if (1) {
-          rd = 0;
-          for (i = 0; i < 8; i++) {
-            rd |= (gpio_read(pi, i+PRT_I_D1) & 0x1) << i;
-          }
-          if (0) {
-            sprintf(s, "%02x\n", rd);
-            fputs(s, fp);
-          } else {
-            putc(rd, fp);
-          }
-        }
-
-        ret = my_gpio_write(pi, PRT_O_nAck, 0);
-        ret = my_gpio_write(pi, PRT_O_nAck, 1);
-        if (0) ret = my_gpio_write(pi, PRT_O_Busy, 0);
-
-        j++;
-      } else {
-        ret = my_gpio_write(pi, PRT_O_Busy, 0);
-      }
-      prev_b = b;
+      j++;
+    } else {
+      ret = my_gpio_write(pi, PRT_O_Busy, 0);
     }
+    prev_b = b;
   }
 
-  printf("j: %d\n", i);
+  printf("Number of bytes: %d\n", j);
 
   fclose(fp);
   pigpio_stop(pi);
   return 0;
 }
 
+/* Handle Ctrl-C */
 void abrt_handler(int sig, siginfo_t *info, void *ctx) {
   printf("si_signo:%d\nsi_code:%d\n", info->si_signo, info->si_code);
   printf("si_pid:%d\nsi_uid:%d\n", (int)info->si_pid, (int)info->si_uid);
